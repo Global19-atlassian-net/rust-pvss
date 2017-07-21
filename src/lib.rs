@@ -1,5 +1,6 @@
 extern crate openssl;
 extern crate serde;
+extern crate serde_bytes;
 extern crate bincode;
 
 #[macro_use]

@@ -1,7 +1,7 @@
 extern crate pvss;
 extern crate bincode;
 
-use bincode::{serialize, Infinite};
+use bincode::{serialize, deserialize, Infinite};
 
 use std::fmt;
 
@@ -63,8 +63,9 @@ fn main() {
     let commitments = pvss::simple::commitments(&escrow);
 
     // Round trip commitments through bytes
-    let commitment_bytes = serialize(&commitments, Infinite);
-
+    let commitment_bytes = serialize(&commitments, Infinite).unwrap();
+    let commitments_deserialized: Vec<pvss::simple::Commitment> = deserialize(&commitment_bytes).unwrap();
+    assert!(commitments_deserialized == commitments);
 
     let shares = pvss::simple::create_shares(&escrow, &pubs);
 

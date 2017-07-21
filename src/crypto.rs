@@ -1,9 +1,12 @@
 use openssl;
 use openssl::ec::*;
 use openssl::bn::*;
+
 use std::ops::Add;
 use std::ops::Sub;
 use std::ops::Mul;
+
+use serde::ser::{Serialize, Serializer};
 
 // currently hardcode curve to P256R1, but in the future probably a good idea
 // to generalize the interface, and make it more generics (with generics for all crypto types)
@@ -231,6 +234,14 @@ impl Point {
         let grp = get_grp();
         let mut ctx = BigNumContext::new().unwrap();
         return self.point.to_bytes(&grp, POINT_CONVERSION_COMPRESSED, &mut ctx).unwrap();
+    }
+}
+
+impl Serialize for Point {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+        where S: Serializer
+    {
+        serializer.serialize_bytes(&self.to_bytes())
     }
 }
 

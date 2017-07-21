@@ -18,6 +18,7 @@ pub struct Escrow {
     pub proof: dleq::Proof,
 }
 
+#[derive(Serialize)]
 pub struct Commitment {
     point: Point,
 }

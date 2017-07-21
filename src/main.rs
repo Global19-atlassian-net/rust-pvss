@@ -1,4 +1,7 @@
 extern crate pvss;
+extern crate bincode;
+
+use bincode::{serialize, Infinite};
 
 use std::fmt;
 
@@ -58,6 +61,11 @@ fn main() {
     let escrow = pvss::simple::escrow(t);
 
     let commitments = pvss::simple::commitments(&escrow);
+
+    // Round trip commitments through bytes
+    let commitment_bytes = serialize(&commitments, Infinite);
+
+
     let shares = pvss::simple::create_shares(&escrow, &pubs);
 
     let mut decrypted = Vec::with_capacity(100);

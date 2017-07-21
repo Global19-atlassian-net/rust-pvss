@@ -8,3 +8,6 @@ name = "pvss"
 
 [dependencies]
 openssl = "0.9.14"
+serde = "0.9"
+serde_derive = "0.9"
+bincode = "0.7"

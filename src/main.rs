@@ -69,6 +69,11 @@ fn main() {
 
     let shares = pvss::simple::create_shares(&escrow, &pubs);
 
+    // Round trip shares through bytes
+    let share_bytes = serialize(&shares, Infinite).unwrap();
+    let shares_deserialized: Vec<pvss::simple::EncryptedShare> = deserialize(&share_bytes).unwrap();
+    assert!(shares_deserialized == shares);
+
     let mut decrypted = Vec::with_capacity(100);
 
     println!("publickeys: {nb_keys}", nb_keys = pubs.len());

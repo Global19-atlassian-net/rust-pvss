@@ -194,6 +194,32 @@ impl PartialEq for Scalar {
     }
 }
 
+impl Serialize for Scalar {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+        where S: Serializer
+    {
+        serializer.serialize_bytes(&self.bn.to_vec())
+    }
+}
+
+impl Deserialize for Scalar {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+        where D: Deserializer
+    {
+
+        #[derive(Deserialize)]
+        struct Packet {
+            #[serde(with = "serde_bytes")]
+            payload: Vec<u8>,
+        }
+
+        let p = Packet::deserialize(deserializer)?;
+        Ok(Scalar {
+            bn: BigNum::from_slice(&p.payload).expect("Could not create Scalar from bytes")
+        })
+    }
+}
+
 impl Point {
     pub fn infinity() -> Point {
         return Point { point: get_point_at_infinity() };

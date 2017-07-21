@@ -23,6 +23,7 @@ pub struct Commitment {
     point: Point,
 }
 
+#[derive(Serialize, Deserialize, PartialEq)]
 pub struct EncryptedShare {
     pub id: ShareId,
     encrypted_val: Point,

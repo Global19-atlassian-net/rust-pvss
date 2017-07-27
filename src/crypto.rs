@@ -1,9 +1,14 @@
 use openssl;
 use openssl::ec::*;
 use openssl::bn::*;
+
 use std::ops::Add;
 use std::ops::Sub;
 use std::ops::Mul;
+
+use serde::ser::{Serialize, Serializer};
+use serde::de::{Deserialize, Deserializer};
+use serde_bytes;
 
 // currently hardcode curve to P256R1, but in the future probably a good idea
 // to generalize the interface, and make it more generics (with generics for all crypto types)
@@ -33,12 +38,8 @@ impl PublicKey {
     }
 
     pub fn from_bytes(bytes: &[u8]) -> PublicKey {
-        let mut ctx = BigNumContext::new().unwrap();
         PublicKey {
-            point: Point {
-                point: EcPoint::from_bytes(&get_grp(), bytes, &mut ctx)
-                    .expect("Could not create PublicKey from bytes")
-            }
+            point: Point::from_bytes(bytes),
         }
     }
 }
@@ -193,6 +194,32 @@ impl PartialEq for Scalar {
     }
 }
 
+impl Serialize for Scalar {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+        where S: Serializer
+    {
+        serializer.serialize_bytes(&self.bn.to_vec())
+    }
+}
+
+impl Deserialize for Scalar {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+        where D: Deserializer
+    {
+
+        #[derive(Deserialize)]
+        struct Packet {
+            #[serde(with = "serde_bytes")]
+            payload: Vec<u8>,
+        }
+
+        let p = Packet::deserialize(deserializer)?;
+        Ok(Scalar {
+            bn: BigNum::from_slice(&p.payload).expect("Could not create Scalar from bytes")
+        })
+    }
+}
+
 impl Point {
     pub fn infinity() -> Point {
         return Point { point: get_point_at_infinity() };
@@ -231,6 +258,38 @@ impl Point {
         let grp = get_grp();
         let mut ctx = BigNumContext::new().unwrap();
         return self.point.to_bytes(&grp, POINT_CONVERSION_COMPRESSED, &mut ctx).unwrap();
+    }
+
+    pub fn from_bytes(bytes: &[u8]) -> Self {
+        let mut ctx = BigNumContext::new().unwrap();
+        Point {
+            point: EcPoint::from_bytes(&get_grp(), bytes, &mut ctx)
+                .expect("Could not create Point from bytes")
+        }
+    }
+}
+
+impl Serialize for Point {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+        where S: Serializer
+    {
+        serializer.serialize_bytes(&self.to_bytes())
+    }
+}
+
+impl Deserialize for Point {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+        where D: Deserializer
+    {
+
+        #[derive(Deserialize)]
+        struct Packet {
+            #[serde(with = "serde_bytes")]
+            payload: Vec<u8>,
+        }
+
+        let p = Packet::deserialize(deserializer)?;
+        Ok(Point::from_bytes(&p.payload))
     }
 }
 

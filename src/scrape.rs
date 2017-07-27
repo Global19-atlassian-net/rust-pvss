@@ -37,10 +37,12 @@ pub struct PublicShares {
     pub proofs: pdleq::Proof,
 }
 
+#[derive(Serialize, Deserialize, PartialEq)]
 pub struct Commitment {
     point: Point,
 }
 
+#[derive(Serialize, Deserialize, PartialEq)]
 pub struct EncryptedShare {
     pub id: ShareId,
     encrypted_val: Point,
@@ -232,4 +234,46 @@ pub fn recover(t: Threshold, shares: &[DecryptedShare]) -> Result<Secret, ()> {
         result = result + shares[i].decrypted_val.mul(&v);
     }
     return Ok(result);
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crypto::create_keypair;
+    use bincode::{serialize, deserialize, Infinite};
+
+    #[test]
+    fn commitment_serialization_roundtrip() {
+        let pubs: Vec<_> = (0..15).map(|_| {
+            create_keypair().0
+        }).collect();
+        let escrow = escrow(10);
+        let public_shares = create_shares(&escrow, &pubs);
+
+        let commitment_bytes = serialize(&public_shares.commitments, Infinite).unwrap();
+        let commitments_deserialized: Vec<Commitment> = deserialize(&commitment_bytes).unwrap();
+        assert!(commitments_deserialized == public_shares.commitments);
+    }
+
+    #[test]
+    fn shares_serialization_roundtrip() {
+        let pubs: Vec<_> = (0..15).map(|_| {
+            create_keypair().0
+        }).collect();
+        let escrow = escrow(10);
+        let public_shares = create_shares(&escrow, &pubs);
+
+        let share_bytes = serialize(&public_shares.encrypted_shares, Infinite).unwrap();
+        let shares_deserialized: Vec<EncryptedShare> = deserialize(&share_bytes).unwrap();
+        assert!(shares_deserialized == public_shares.encrypted_shares);
+    }
+
+    #[test]
+    fn secret_serialization_roundtrip() {
+        let escrow = escrow(10);
+
+        let secret_bytes = serialize(&escrow.secret, Infinite).unwrap();
+        let secret_deserialized: Secret = deserialize(&secret_bytes).unwrap();
+        assert!(secret_deserialized == escrow.secret);
+    }
 }

@@ -1,4 +1,11 @@
 extern crate openssl;
+extern crate serde;
+extern crate serde_bytes;
+extern crate bincode;
+
+#[macro_use]
+extern crate serde_derive;
+
 pub mod crypto;
 
 mod types;
